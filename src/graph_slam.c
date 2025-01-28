@@ -426,7 +426,7 @@ int optimize(pg * graph) {
        * user to press enter                             */
       printf("=========================================\n");
       for (int i = 0; i < graph->node_count; ++i) {
-         printf("[ %.2f %.2f %.2f ] [ %e %e %e ]\n",graph->node[i].pos.x,graph->node[i].pos.y,
+         printf("[ %.2f %.2f %.2f ] [ %.2f %.2f %.2f ]\n",graph->node[i].pos.x,graph->node[i].pos.y,
                graph->node[i].pos.t,b[i*3],b[(i*3)+1],b[(i*3)+2]);
       }
       printf("=========================================\n");

@@ -66,3 +66,54 @@ insert_element:
 
    return 0;
 }
+
+int member_set(int element, set * s) {
+
+   /* get the block this element is associated with */
+   int block_num = element / SET_BLOCK_DIVISOR;
+
+   if (block_num < s->block_count && s->blocks[block_num] != NULL) {
+
+      /* return the value in the element's position. It will
+       * only be 1 if it has been added                     */
+      int block_pos = (element % SET_BLOCK_DIVISOR) / SET_BLOCK_SIZE;
+      int block_offset = element % SET_BLOCK_SIZE;
+      return (*s->blocks[block_num])[block_pos] & (1 << block_offset);
+
+   }
+
+   /* Either our slot has not been allocated or our 
+    * block has not been allocated. Either way, our
+    * element is not in the set                     */
+   return 0;
+}
+
+
+void remove_set(int element, set * s) {
+
+   /* get the block this element is associated with */
+   int block_num = element / SET_BLOCK_DIVISOR;
+
+   if (block_num < s->block_count && s->blocks[block_num] != NULL) {
+
+      /* mask out the element's position, removing it if it was set */
+      int block_pos = (element % SET_BLOCK_DIVISOR) / SET_BLOCK_SIZE;
+      int block_offset = element % SET_BLOCK_SIZE;
+      (*s->blocks[block_num])[block_pos] &= (~(1 << block_offset));
+
+   }
+
+   /* Either our slot has not been allocated or our 
+    * block has not been allocated. Either way, our
+    * element is not in the set                     */
+}
+
+void destruct_set(set * s) {
+   /* loop through all blocks, freeing them */
+   for (int i = 0; i < s->block_num; ++i)
+      free(s->blocks[i]); /* note that free(NULL) is allowed */
+
+   /* free the array of blocks and the set */
+   free(s->blocks);
+   free(s);
+}

@@ -42,11 +42,17 @@ typedef struct bit_array_set {
 /* allocate a new set */
 set * construct_set(void);
 
-/* add an element to our set */
+/* add an element to our set. 
+ * Return -1 on memory allocation failure
+ * and zero on success                    */
 int insert_set(int element, set * s);
 
+/* check if an element is a memeber of our set 
+ * Return 1 if true and 0 if false            */
+int member_set(int element, set * s);
+
 /* remove an element from our set */
-int remove_set(int element, set * s);
+void remove_set(int element, set * s);
 
 /* free all memory associated with our set.
  * Note that this also frees the reference
