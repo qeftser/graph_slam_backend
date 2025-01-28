@@ -6,6 +6,7 @@
 #include "homogeneous.h"
 #include "solver.h"
 #include "hash.h"
+#include <time.h>
 
 /* construct a long by oring an int and a 
  * bitshifted one                         */
@@ -123,6 +124,46 @@ pgn_handle add_node(pv pos, pg * graph);
  * it :)                                                      */
 int        add_edge(pgn_handle xi, pgn_handle xj, pv * observation, sm33 * information, pg * graph);
 
+/* maximum value the clock_t variable will hold */
+#define CLK_MAX (~(((clock_t)1)<<((((sizeof(clock_t))*8))-1)))
+
+/* Set of values the for the end state of the optimization
+ * function. succcess is set if the optimization was allowed 
+ * to finish normally, failure is set on divergence, step_limit
+ * is set if the step limit was hit before optimization finished,
+ * and time_limit is set if the time limit was hit before
+ * optimization finished                                         */
+enum optimize_end_state{ OES_success,  OES_step_limit,  OES_time_limit,  OES_failure};
+
+/* parameters and fields to pass to the 
+ * optimization function to control it's
+ * behavior and to get more data out of it.
+ * Otherwise the solver is run with it's
+ * default parameters and settings. Values 
+ * labeled as input are set by the user and 
+ * read by the optimize function, and values
+ * labeled as output are set by the optimize 
+ * function to be read by the user           */
+typedef struct graph_slam_optimization_data {
+   clock_t t_total;     /*OUTPUT how many clocks did the optimization run for?              */
+   clock_t t_construct; /*OUTPUT how many clocks were spent on construction of the problem? */
+   clock_t t_solve;     /*OUTPUT how many clock cycles were spent on solving the system?    */
+   int     steps;       /*OUTPUT how many steps did the optimization perform?               */
+   int     t_limit;     /*INPUT maximum cycles of seconds to allow the process to run for
+                         *      Note that this value will not be followed exaclty, there
+                         *      will be overshoot                                            
+                         *      Setting this value to zero allows infinite runtime          */
+   int     step_limit;  /*INPUT maximum number of steps to allow the optimizer to perform   
+                         *      Setting this value to zero allows infinite steps            */
+   float   cutoff;      /*INPUT when the total change is below this value, exit. Default   
+                         * value of 1e-6 will be used if this parameter is not set          */
+   enum optimize_end_state 
+           end_state;   /*OUTPUT returns why the optimization stopped                       */
+} gsod;
+
+/* produce nice printed output of the optimization data */
+void print_graph_slam_optimization_data(gsod * data);
+
 /* This is the slam part of graph slam. Perform
  * optimization on the given pose graph, modifying
  * the nodes in the graph. This operation will not
@@ -134,6 +175,6 @@ int        add_edge(pgn_handle xi, pgn_handle xj, pv * observation, sm33 * infor
  * as the pose graph could have been corrupted during the
  * divergence. Note that this method may take a long time
  * to exectue if the pose graph gets large                */
-int optimize(pg * graph);
+int optimize(pg * graph, gsod * settings);
 
 #endif

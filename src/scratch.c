@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 /* helper method for computing the exact observation
  * given from seeing value a from value b. Used to
@@ -137,7 +138,25 @@ int main(void) {
    add_edge(2,3,&obs34,&information,graph);
    add_edge(3,0,&obs41,&information,graph);
 
-   optimize(graph);
+   gsod settings;
+   bzero(&settings,sizeof(gsod));
+
+   optimize(graph,&settings);
+
+   pos1 = graph->node[0].pos;
+   pos2 = graph->node[1].pos;
+   pos3 = graph->node[2].pos;
+   pos4 = graph->node[3].pos;
+
+   printf("end:\n");
+   printf("[%f %f %f]\n",pos1.x,pos1.y,pos1.t);
+   printf("[%f %f %f]\n",pos2.x,pos2.y,pos2.t);
+   printf("[%f %f %f]\n",pos3.x,pos3.y,pos3.t);
+   printf("[%f %f %f]\n",pos4.x,pos4.y,pos4.t);
+
+   printf("\n");
+
+   print_graph_slam_optimization_data(&settings);
 
    return 0;
 

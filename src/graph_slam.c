@@ -300,7 +300,34 @@ void free_pose_graph(pg * graph) {
    free(graph);
 }
 
-int optimize(pg * graph) {
+int optimize(pg * graph, gsod * settings) {
+
+   /* default number of cycles and limit
+    * of granularity allowed            */
+   static int default_step_limit = 0;
+   static float default_cutoff = 1e-6;
+
+   /* total number of steps allowed */
+   int step_limit = default_step_limit;
+   /* point at which we stop optimization */
+   float cutoff = default_cutoff;
+
+   /* used in timing various operations */
+   clock_t t_limit, t_construct = 0, t_solve = 0, t_total = clock();
+
+   /* if we have a settings structure supplied, fill
+    * out our values in preparation                 */
+   if (settings != NULL) {
+      /* use maximum clock value if t_limit is zero */
+      t_limit = (settings->t_limit ? settings->t_limit : CLK_MAX);
+
+      step_limit = settings->step_limit;
+
+      /* use default cutoff if provided cutoff is zero */
+      cutoff = (settings->cutoff ? settings->cutoff : default_cutoff);
+
+      settings->steps = 0;
+   }
 
    /* setup structures needed for computation */
    hash  * table = construct_table(graph->edge_count);
@@ -314,16 +341,19 @@ int optimize(pg * graph) {
 
    /* keep track of the total movement of the system */
    double total_change;
-   double largest_change;
 
    /* perform optimization loop */
    while (1) {
+
+      if (settings != NULL) {
+         settings->steps += 1;
+         t_construct = clock();
+      }
 
       bzero(b,sizeof(float)* 3 *graph->node_count);
       bzero(values,sizeof(mt)* 21 *graph->edge_count);
       clear_table(table);
       total_change = 0.0;
-      largest_change = 0.0;
 
       int value = 0, b_pos, xi, xj;
       m33 J_i, J_j, H_ii, H_ji, H_jj;
@@ -390,16 +420,21 @@ int optimize(pg * graph) {
       else
          load_packed_column_matrix(values,H);
 
+      if (settings != NULL) {
+         settings->t_construct += clock() - t_construct;
+         t_solve = clock();
+      }
+
       /* perform the factorization and solve the matrix */
       perform_numerical_factorization(H,L);
       solve_system(L,b);
 
-      /* collect total and largest change */
-      for (int i = 0; i < graph->node_count*3; ++i) {
+      if (settings != NULL)
+         settings->t_solve += clock() - t_solve;
+
+      /* collect total change */
+      for (int i = 0; i < graph->node_count*3; ++i)
          total_change += fabs(b[i]);
-         if (fabs(b[i]) > largest_change)
-            largest_change = fabs(b[i]);
-      }
 
       /* check if our decomposition has diverged. This is done to avoid letting everything
        * go to nan. Unfortunatly we cannot tell if this will happen before it does, so the
@@ -410,6 +445,10 @@ int optimize(pg * graph) {
       if (isnan(total_change) || isinf(total_change) || total_change != total_change) {
          printf("[GRAPH SLAM BACKEND] optimization failure, pose graph is likely not positive semi-definite\n");
          printf("[GRAPH SLAM BACKEND] exiting prematurely, pose graph values may be trash\n");
+         if (settings != NULL) {
+            settings->t_total = clock() - t_total;
+            settings->end_state = OES_failure;
+         }
          return -1;
       }
 
@@ -422,18 +461,31 @@ int optimize(pg * graph) {
          normalize_angle(graph->node[i].pos.t);
       }
 
-      /* temporary values. Print all updates and hold for 
-       * user to press enter                             */
-      printf("=========================================\n");
-      for (int i = 0; i < graph->node_count; ++i) {
-         printf("[ %.2f %.2f %.2f ] [ %.2f %.2f %.2f ]\n",graph->node[i].pos.x,graph->node[i].pos.y,
-               graph->node[i].pos.t,b[i*3],b[(i*3)+1],b[(i*3)+2]);
+      /* check our exit conditions */
+      if (clock() - t_total > t_limit) {
+         if (settings != NULL) {
+            settings->t_total = clock() - t_total;
+            settings->end_state = OES_time_limit;
+         }
+         return -1;
       }
-      printf("=========================================\n");
-      printf("TOTAL CHANGE: %e\n",total_change);
-      printf("LARGE CHANGE: %e\n",largest_change);
-      printf("=========================================\n");
-      getchar();
+
+      /* if step limit was zero this will go forever */
+      if (--step_limit == 0) {
+         if (settings != NULL) {
+            settings->t_total = clock() - t_total;
+            settings->end_state = OES_step_limit;
+         }
+         return -1;
+      }
+
+      /* if the movement of our optimizer is 
+       * below this value we assume it is done
+       * and exit. Note that this may happen 
+       * before the optimization converges, but
+       * it will save us a few steps.          */
+      if (total_change < cutoff)
+         break;
    }
 
    /* cleanup all the memory we allocated */
@@ -443,6 +495,41 @@ int optimize(pg * graph) {
    free_packed_column_matrix(H);
    free_packed_column_matrix(L);
 
+   /* set return values for the settings structure */
+   if (settings != NULL) {
+      settings->t_total = clock() - t_total;
+      settings->end_state = OES_success;
+   }
+
    return 0;
 
+}
+
+void print_graph_slam_optimization_data(gsod * data) {
+   printf("-------------------------------------------------------------------------------\n");
+   switch (data->end_state) {
+      case OES_success:
+         printf("result: SUCCESS\n");
+         break;
+      case OES_step_limit:
+         printf("result: STEP LIMIT REACHED [%d]\n",
+                data->step_limit);
+         break;
+      case OES_time_limit:
+         printf("result: TIME LIMIT REACHED [%fs]\n",
+                (double)data->t_limit / CLOCKS_PER_SEC);
+      case OES_failure:
+         printf("result: FAILURE\n");
+   }
+   printf("total steps: %d\n",data->steps);
+   printf("total time:  %f\n",(double)data->t_total / CLOCKS_PER_SEC);
+   printf("detailed time report:\n");
+   printf("\t[ %14s : %20f (%%%5.2f) ]\n","construction",
+         (double)data->t_construct / CLOCKS_PER_SEC, (double)data->t_construct / data->t_total);
+   printf("\t[ %14s : %20f (%%%5.2f) ]\n","solving",
+         (double)data->t_solve / CLOCKS_PER_SEC, (double)data->t_solve / data->t_total);
+   printf("\t[ %14s : %20f (%%%5.2f) ]\n","misc",
+         (double)(data->t_total - data->t_solve - data->t_construct) / CLOCKS_PER_SEC,
+         (double)(data->t_total - data->t_solve - data->t_construct) / data->t_total);
+   printf("-------------------------------------------------------------------------------\n");
 }
