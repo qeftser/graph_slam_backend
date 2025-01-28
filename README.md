@@ -1,19 +1,37 @@
 
-## Hi
+# Graph Slam Backend
 
-This is some practice writing a graph slam backend from scratch in C to gain a solid
-understanding of how it works. I will try to keep it to no libraries, and do all
-the computation in house so to speak. The end goal would be to use this backend
-in a full slam system and see how it does.
+## Description
 
-## Some more details
+This is a graph slam backend written from scratch in C, mainly to help me gain
+understanding of how it works. No libraries (other then stdlib) are used, and
+the project currently contains a full working backend for a 2d (3 dof) system.
 
-This is a 2d graph slam algorithm that holds nodes with values x, y, and theta. As
-a user you must supply the parameters for the nodes. Observation constraints take 
-the form of xj <- xi, that is: how would xj look relative to xi. In homogeneous 
-coordinates, this is the transformation Z which has the proporties Z-1 * xj = xi
-and Z * xi = xj. The graph is expected to be built up as the user traverses the
-environment. When a loop closure occurs, or after multiple have occured, the 
-optimization can be triggered by the user, with an arbitrary node set as static.
-This will modify all the poses held by the pose graph, and the user can extract
-them to update thier own representation when the process is done.
+## TODO
+
+ [ ] Write usage explaination and examples.
+ [ ] Upload math for jacobians.
+ [ ] Finish documentation.
+
+## Sources
+
+```
+A great reference on many modern robotics algorithms.
+
+Thrun, Sebastian. “Probabilistic robotics.” Commun. ACM 45 (2002): 52-57.
+```
+```
+Useful paper and introduction to graph slam. Most of the variable names and mathematics are derived from this.
+
+Grisetti, Giorgio & Kümmerle, Rainer & Stachniss, Cyrill & Burgard, Wolfram. (2010). A tutorial on graph-based SLAM. IEEE Transactions on Intelligent Transportation Systems Magazine. 2. 31-43. 10.1109/MITS.2010.939925. 
+```
+```
+Source used in the construction of cholesky decomposition solver.
+
+Stewart, G. W.. “Building an Old-Fashioned Sparse Solver.” (2003).
+```
+```
+Useful lecture on the graph slam algorithm. Method of fixing nodes was derived from here.
+
+Stachniss, C. (2020) Graph-based SLAM using Pose Graphs, YouTube. Available at: https://www.youtube.com/watch?v=uHbRKvD8TWg (Accessed: 28 January 2025). 
+```
