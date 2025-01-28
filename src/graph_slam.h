@@ -102,7 +102,7 @@ int insert_information_matrix_values(int xi, int xj, m33 * H_ii, m33 * H_ji, m33
 
 /* allocate the memory and setup the
  * values for the pose graph         */
-pg * construct_pose_graph();
+pg * construct_pose_graph(void);
 /* deallocate all memory associated with the
  * pose graph. Note that this frees graph 
  * as well.                                 */
