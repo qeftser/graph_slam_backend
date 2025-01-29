@@ -35,7 +35,7 @@ typedef uint8_t set_block[SET_BLOCK_SIZE];
 /* The set structure. An expanding array
  * of set blocks                         */
 typedef struct bit_array_set {
-   int block_num, block_count;
+   int block_count;
    set_block ** blocks;
 } set;
 

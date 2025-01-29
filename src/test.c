@@ -16,6 +16,7 @@
 #include "solver.h"
 #include "hash.h"
 #include "graph_slam.h"
+#include "set.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -228,6 +229,72 @@ int main(void) {
                          (get_entry(5,table) == -1));
       destruct_table(table);
    }
+   printf("set.h tests\n");
+   {
+      set * s = construct_set();
+      destruct_set(s);
+      TEST("construct/destruct",1);
+   }
+   {
+      set * s = construct_set();
+      insert_set(5,s);
+      TEST("insert 1",member_set(5,s) &&
+                     !member_set(6,s));
+      destruct_set(s);
+   }
+   {
+      set * s = construct_set();
+      insert_set(1,s);
+      insert_set(5,s);
+      insert_set(12,s);
+      insert_set(23,s);
+      insert_set(100,s);
+      insert_set(84,s);
+      insert_set(65,s);
+      TEST("insert 2",member_set(1,s) &&
+                      member_set(5,s) &&
+                      member_set(12,s) &&
+                      member_set(23,s) &&
+                      member_set(100,s) &&
+                      member_set(84,s) &&
+                      member_set(65,s) &&
+                     !member_set(6,s));
+      destruct_set(s);
+   }
+   {
+      set * s = construct_set();
+      insert_set(50000,s);
+      TEST("insert expand",member_set(50000,s) &&
+                          !member_set(50001,s) &&
+                          !member_set(49999,s));
+      destruct_set(s);
+   }
+   {
+      set * s = construct_set();
+      insert_set(1,s);
+      insert_set(5,s);
+      insert_set(12,s);
+      insert_set(23,s);
+      insert_set(100,s);
+      insert_set(84,s);
+      insert_set(65,s);
+      remove_set(1,s);
+      remove_set(5,s);
+      remove_set(12,s);
+      remove_set(23,s);
+      remove_set(100,s);
+      remove_set(84,s);
+      remove_set(65,s);
+      TEST("remove",!member_set(1,s) &&
+                    !member_set(5,s) &&
+                    !member_set(12,s) &&
+                    !member_set(23,s) &&
+                    !member_set(100,s) &&
+                    !member_set(84,s) &&
+                    !member_set(65,s) &&
+                    !member_set(6,s));
+      destruct_set(s);
+   }
    printf("graph_slam.h tests\n");
    {
       pg * graph = construct_pose_graph();
@@ -408,6 +475,7 @@ int main(void) {
                                                              poses[1].x,2.0,poses[1].y,1.0,poses[1].t,M_PI/2,
                                                              poses[2].x,2.0,poses[2].y,2.0,poses[2].t,M_PI,
                                                              poses[3].x,1.0,poses[3].y,2.0,poses[3].t,-M_PI/2));
+      free_pose_graph(graph);
    }
    {
       pg * graph = construct_pose_graph();
@@ -432,6 +500,7 @@ int main(void) {
                                                              poses[1].x,12.0,poses[1].y,1.0,poses[1].t,M_PI/2,
                                                              poses[2].x,12.0,poses[2].y,2.0,poses[2].t,M_PI,
                                                              poses[3].x,11.0,poses[3].y,2.0,poses[3].t,-M_PI/2));
+      free_pose_graph(graph);
    }
 
 

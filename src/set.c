@@ -11,7 +11,6 @@ set * construct_set() {
                         SET_INITIAL_BLOCK_NUM);
 
    /* set initial values */
-   ret->block_num = 0;
    ret->block_count = SET_INITIAL_BLOCK_NUM;
 
    return ret;
@@ -38,8 +37,8 @@ insert_element:
       }
 
       /* actually add the element */
-      int block_pos = (element % SET_BLOCK_DIVISOR) / SET_BLOCK_SIZE;
-      int block_offset = element % SET_BLOCK_SIZE;
+      int block_pos = (element % SET_BLOCK_DIVISOR) / 8;
+      int block_offset = element % 8;
       (*s->blocks[block_num])[block_pos] |= (1 << block_offset);
 
    }
@@ -76,8 +75,8 @@ int member_set(int element, set * s) {
 
       /* return the value in the element's position. It will
        * only be 1 if it has been added                     */
-      int block_pos = (element % SET_BLOCK_DIVISOR) / SET_BLOCK_SIZE;
-      int block_offset = element % SET_BLOCK_SIZE;
+      int block_pos = (element % SET_BLOCK_DIVISOR) / 8;
+      int block_offset = element % 8;
       return (*s->blocks[block_num])[block_pos] & (1 << block_offset);
 
    }
@@ -97,8 +96,8 @@ void remove_set(int element, set * s) {
    if (block_num < s->block_count && s->blocks[block_num] != NULL) {
 
       /* mask out the element's position, removing it if it was set */
-      int block_pos = (element % SET_BLOCK_DIVISOR) / SET_BLOCK_SIZE;
-      int block_offset = element % SET_BLOCK_SIZE;
+      int block_pos = (element % SET_BLOCK_DIVISOR) / 8;
+      int block_offset = element % 8;
       (*s->blocks[block_num])[block_pos] &= (~(1 << block_offset));
 
    }
@@ -110,7 +109,7 @@ void remove_set(int element, set * s) {
 
 void destruct_set(set * s) {
    /* loop through all blocks, freeing them */
-   for (int i = 0; i < s->block_num; ++i)
+   for (int i = 0; i < s->block_count; ++i)
       free(s->blocks[i]); /* note that free(NULL) is allowed */
 
    /* free the array of blocks and the set */

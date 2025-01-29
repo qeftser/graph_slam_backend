@@ -7,7 +7,7 @@ CC_FLAGS := -g
 LINKER_FLAGS := -g -lm
 
 # the source files for the program
-SRC_FILES := src/graph_slam.c src/hash.c src/homogeneous.c src/solver.c
+SRC_FILES := src/graph_slam.c src/hash.c src/homogeneous.c src/solver.c src/set.c
 OBJ_FILES := $(SRC_FILES:.c=.o)
 
 all: test scratch

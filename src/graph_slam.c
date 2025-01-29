@@ -313,7 +313,7 @@ int optimize(pg * graph, gsod * settings) {
    float cutoff = default_cutoff;
 
    /* used in timing various operations */
-   clock_t t_limit, t_construct = 0, t_solve = 0, t_total = clock();
+   clock_t t_limit = CLK_MAX, t_construct = 0, t_solve = 0, t_total = clock();
 
    /* if we have a settings structure supplied, fill
     * out our values in preparation                 */
