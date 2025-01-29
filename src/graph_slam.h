@@ -156,7 +156,7 @@ typedef struct graph_slam_optimization_data {
    int     step_limit;  /*INPUT maximum number of steps to allow the optimizer to perform   
                          *      Setting this value to zero allows infinite steps            */
    float   cutoff;      /*INPUT when the total change is below this value, exit. Default   
-                         * value of 1e-6 will be used if this parameter is not set          */
+                         * value of 1e-4 will be used if this parameter is not set          */
    enum optimize_end_state 
            end_state;   /*OUTPUT returns why the optimization stopped                       */
 } gsod;
@@ -174,7 +174,9 @@ void print_graph_slam_optimization_data(gsod * data);
  * be prepared to impliment some kind of recovery method,
  * as the pose graph could have been corrupted during the
  * divergence. Note that this method may take a long time
- * to exectue if the pose graph gets large                */
+ * to exectue if the pose graph gets large. Note that
+ * passing NULL to settings will result in defaults 
+ * being used.                                           */
 int optimize(pg * graph, gsod * settings);
 
 #endif

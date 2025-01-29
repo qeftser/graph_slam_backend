@@ -324,7 +324,7 @@ void perform_numerical_factorization(pcmat * A, pcmat * L) {
 
    /* an extra small value is needed to offset issues
     * with numerical stability */
-   static float epsilion = 0.0000001;
+   static float epsilon = 0.0000001;
 
    /* setup */
    rtmd * r = get_row_traversal_metadata(L);
@@ -353,7 +353,7 @@ void perform_numerical_factorization(pcmat * A, pcmat * L) {
       for (ii = L->colp[r->i]; ii < L->colp[r->i+1]; ++ii) {
          i = L->rx[ii];
          if (i == r->i) {
-            L->val[ii] = sqrt(accum[i] + epsilion);
+            L->val[ii] = sqrt(accum[i] + epsilon);
             Lkkinv = 1.0 / L->val[ii];
          }
          else {

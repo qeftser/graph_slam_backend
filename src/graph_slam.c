@@ -305,7 +305,7 @@ int optimize(pg * graph, gsod * settings) {
    /* default number of cycles and limit
     * of granularity allowed            */
    static int default_step_limit = 0;
-   static float default_cutoff = 1e-6;
+   static float default_cutoff = 1e-4;
 
    /* total number of steps allowed */
    int step_limit = default_step_limit;

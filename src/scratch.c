@@ -116,7 +116,7 @@ int main(void) {
    pv obs00 = { 1, 2, 3 };
    pv obs11 = { 4, 5, 6 };
 
-   pos3.x += 10;
+   pos1.x += 10;
 
    printf("start:\n");
    printf("[%f %f %f]\n",pos1.x,pos1.y,pos1.t);

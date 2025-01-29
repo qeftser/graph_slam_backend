@@ -20,6 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 /* helper method for computing the exact observation
  * given from seeing value a from value b. Used to
@@ -31,6 +32,27 @@ pv a_from_b(pv a, pv b) {
    ht htb_inv = invert_homogeneous_transformation(&htb);
    ht a_f_b = merge_homogeneous_transformation(&htb_inv,&hta);
    return destruct_homogeneous_transformation(&a_f_b);
+}
+
+/* a function for checking the equality of a list of 
+ * double values. Count is the number of pairs expected,
+ * and epsilon is the tolarated error in the matches. 
+ * After these two values, (count) pairs of doubles are 
+ * expected to be passed to the function, resulting in
+ * 2*(count)+2 total arguments. A 1 is returned if all
+ * values are seen as equal, and a 0 is returned otherwise */
+int check_equality_double(double epsilon, int count, ...) {
+   va_list args;
+   va_start(args,count);
+   int res = 1;
+   for (int i = 0; i < count; ++i) {
+      double dbl_1 = va_arg(args,double);
+      double dbl_2 = va_arg(args,double);
+      if (fabs(dbl_1 - dbl_2) > epsilon)
+         res = 0;
+   }
+   va_end(args);
+   return res;
 }
 
 int main(void) {
@@ -68,15 +90,9 @@ int main(void) {
       ht t4 = merge_homogeneous_transformation(&t1,&t2);
       ht t5 = merge_homogeneous_transformation(&t3,&t4);
       normalize_homogeneous_transformation(&t5);
-      TEST("merge and inversion checks",(fabs(t2.v[0] - t5.v[0]) < 0.0001) &&
-                                        (fabs(t2.v[1] - t5.v[1]) < 0.0001) &&
-                                        (fabs(t2.v[2] - t5.v[2]) < 0.0001) &&
-                                        (fabs(t2.v[3] - t5.v[3]) < 0.0001) &&
-                                        (fabs(t2.v[4] - t5.v[4]) < 0.0001) &&
-                                        (fabs(t2.v[5] - t5.v[5]) < 0.0001) &&
-                                        (fabs(t2.v[6] - t5.v[6]) < 0.0001) &&
-                                        (fabs(t2.v[7] - t5.v[7]) < 0.0001) &&
-                                        (fabs(t2.v[8] - t5.v[8]) < 0.0001));
+      TEST("merge and inversion checks",check_equality_double(0.0001,9,t2.v[0],t5.v[0],
+               t2.v[1],t5.v[1],t2.v[2],t5.v[2],t2.v[3],t5.v[3],t2.v[4],t5.v[4],t2.v[5],
+               t5.v[5],t2.v[6],t5.v[6],t2.v[7],t5.v[7],t2.v[8],t5.v[8]));
    }
    {
       ht t1 = construct_homogeneous_transformation(30,1,2);
@@ -368,6 +384,54 @@ int main(void) {
       free_packed_column_matrix(H);
       free(values);
       free_pose_graph(graph);
+   }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 2, 1, 2, 1, 1, 2 };
+
+      poses[3].x += 10;
+      
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      optimize(graph,NULL);
+
+      for(int i = 0; i < 4; ++i)
+         poses[i] = graph->node[i].pos;
+
+      TEST("optimize test 1",check_equality_double(0.0001,12,poses[0].x,1.0,poses[0].y,1.0,poses[0].t,0.0,
+                                                             poses[1].x,2.0,poses[1].y,1.0,poses[1].t,M_PI/2,
+                                                             poses[2].x,2.0,poses[2].y,2.0,poses[2].t,M_PI,
+                                                             poses[3].x,1.0,poses[3].y,2.0,poses[3].t,-M_PI/2));
+   }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 2, 1, 2, 1, 1, 2 };
+      
+      poses[0].x += 10;
+
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      optimize(graph,NULL);
+
+      for(int i = 0; i < 4; ++i)
+         poses[i] = graph->node[i].pos;
+
+      TEST("optimize test 2",check_equality_double(0.0001,12,poses[0].x,11.0,poses[0].y,1.0,poses[0].t,0.0,
+                                                             poses[1].x,12.0,poses[1].y,1.0,poses[1].t,M_PI/2,
+                                                             poses[2].x,12.0,poses[2].y,2.0,poses[2].t,M_PI,
+                                                             poses[3].x,11.0,poses[3].y,2.0,poses[3].t,-M_PI/2));
    }
 
 
