@@ -62,174 +62,254 @@ void compute_jacobians_and_error(pge * edge, pg * graph, m33 * J_i, m33 * J_j, p
 
 }
 
-void compute_constraints_and_coefficients
-(m33 * J_i, m33 * J_j, pv * e_ij, sm33 * i, m33 * H_ii, m33 * H_ji, m33 * H_jj, pv * b_i, pv * b_j) {
+/* sucessor function of the above two functions */
+int compute_constraints_and_fill_information_matrix(int xi, int xj, m33 * J_i, m33 * J_j, pv * e_ij, sm33 * i,
+                                                    float * b, mt * values, hash * table, set * fixed,
+                                                    int value) {
+   /* intermediate values */
+   m33 temp, H_xx;
+   sm33 H_ii, H_jj;
+   pv b_i, b_j;
 
-   m33 temp;
-
-   /* H_ii = (J_i)' i J_i */
-   temp[0] = (*J_i)[0]*i->a00 + (*J_i)[3]*i->a10 + (*J_i)[6]*i->a20;
-   temp[1] = (*J_i)[0]*i->a10 + (*J_i)[3]*i->a11 + (*J_i)[6]*i->a21;
-   temp[2] = (*J_i)[0]*i->a20 + (*J_i)[3]*i->a21 + (*J_i)[6]*i->a22;
-   temp[3] = (*J_i)[1]*i->a00 + (*J_i)[4]*i->a10 + (*J_i)[7]*i->a20;
-   temp[4] = (*J_i)[1]*i->a10 + (*J_i)[4]*i->a11 + (*J_i)[7]*i->a21;
-   temp[5] = (*J_i)[1]*i->a20 + (*J_i)[4]*i->a21 + (*J_i)[7]*i->a22;
-   temp[6] = (*J_i)[2]*i->a00 + (*J_i)[5]*i->a10 + (*J_i)[8]*i->a20;
-   temp[7] = (*J_i)[2]*i->a10 + (*J_i)[5]*i->a11 + (*J_i)[8]*i->a21;
-   temp[8] = (*J_i)[2]*i->a20 + (*J_i)[5]*i->a21 + (*J_i)[8]*i->a22;
-   (*H_ii)[0] = temp[0]*(*J_i)[0] + temp[1]*(*J_i)[3] + temp[2]*(*J_i)[6];
-   (*H_ii)[1] = temp[0]*(*J_i)[1] + temp[1]*(*J_i)[4] + temp[2]*(*J_i)[7];
-   (*H_ii)[2] = temp[0]*(*J_i)[2] + temp[1]*(*J_i)[5] + temp[2]*(*J_i)[8];
-   (*H_ii)[3] = temp[3]*(*J_i)[0] + temp[4]*(*J_i)[3] + temp[5]*(*J_i)[6];
-   (*H_ii)[4] = temp[3]*(*J_i)[1] + temp[4]*(*J_i)[4] + temp[5]*(*J_i)[7];
-   (*H_ii)[5] = temp[3]*(*J_i)[2] + temp[4]*(*J_i)[5] + temp[5]*(*J_i)[8];
-   (*H_ii)[6] = temp[6]*(*J_i)[0] + temp[7]*(*J_i)[3] + temp[8]*(*J_i)[6];
-   (*H_ii)[7] = temp[6]*(*J_i)[1] + temp[7]*(*J_i)[4] + temp[8]*(*J_i)[7];
-   (*H_ii)[8] = temp[6]*(*J_i)[2] + temp[7]*(*J_i)[5] + temp[8]*(*J_i)[8];
-
-
-   /* b_i = (J_i)' i e_ij */
-   b_i->x = temp[0]*e_ij->x + temp[1]*e_ij->y + temp[2]*e_ij->t;
-   b_i->y = temp[3]*e_ij->x + temp[4]*e_ij->y + temp[5]*e_ij->t;
-   b_i->t = temp[6]*e_ij->x + temp[7]*e_ij->y + temp[8]*e_ij->t;
-
-   /* H_jj = (J_j)' i J_j */
-   temp[0] = (*J_j)[0]*i->a00 + (*J_j)[3]*i->a10 + (*J_j)[6]*i->a20;
-   temp[1] = (*J_j)[0]*i->a10 + (*J_j)[3]*i->a11 + (*J_j)[6]*i->a21;
-   temp[2] = (*J_j)[0]*i->a20 + (*J_j)[3]*i->a21 + (*J_j)[6]*i->a22;
-   temp[3] = (*J_j)[1]*i->a00 + (*J_j)[4]*i->a10 + (*J_j)[7]*i->a20;
-   temp[4] = (*J_j)[1]*i->a10 + (*J_j)[4]*i->a11 + (*J_j)[7]*i->a21;
-   temp[5] = (*J_j)[1]*i->a20 + (*J_j)[4]*i->a21 + (*J_j)[7]*i->a22;
-   temp[6] = (*J_j)[2]*i->a00 + (*J_j)[5]*i->a10 + (*J_j)[8]*i->a20;
-   temp[7] = (*J_j)[2]*i->a10 + (*J_j)[5]*i->a11 + (*J_j)[8]*i->a21;
-   temp[8] = (*J_j)[2]*i->a20 + (*J_j)[5]*i->a21 + (*J_j)[8]*i->a22;
-   (*H_jj)[0] = temp[0]*(*J_j)[0] + temp[1]*(*J_j)[3] + temp[2]*(*J_j)[6];
-   (*H_jj)[1] = temp[0]*(*J_j)[1] + temp[1]*(*J_j)[4] + temp[2]*(*J_j)[7];
-   (*H_jj)[2] = temp[0]*(*J_j)[2] + temp[1]*(*J_j)[5] + temp[2]*(*J_j)[8];
-   (*H_jj)[3] = temp[3]*(*J_j)[0] + temp[4]*(*J_j)[3] + temp[5]*(*J_j)[6];
-   (*H_jj)[4] = temp[3]*(*J_j)[1] + temp[4]*(*J_j)[4] + temp[5]*(*J_j)[7];
-   (*H_jj)[5] = temp[3]*(*J_j)[2] + temp[4]*(*J_j)[5] + temp[5]*(*J_j)[8];
-   (*H_jj)[6] = temp[6]*(*J_j)[0] + temp[7]*(*J_j)[3] + temp[8]*(*J_j)[6];
-   (*H_jj)[7] = temp[6]*(*J_j)[1] + temp[7]*(*J_j)[4] + temp[8]*(*J_j)[7];
-   (*H_jj)[8] = temp[6]*(*J_j)[2] + temp[7]*(*J_j)[5] + temp[8]*(*J_j)[8];
-
-   /* H_ji = (J_j)' i J_i */
-   (*H_ji)[0] = temp[0]*(*J_i)[0] + temp[1]*(*J_i)[3] + temp[2]*(*J_i)[6];
-   (*H_ji)[1] = temp[0]*(*J_i)[1] + temp[1]*(*J_i)[4] + temp[2]*(*J_i)[7];
-   (*H_ji)[2] = temp[0]*(*J_i)[2] + temp[1]*(*J_i)[5] + temp[2]*(*J_i)[8];
-   (*H_ji)[3] = temp[3]*(*J_i)[0] + temp[4]*(*J_i)[3] + temp[5]*(*J_i)[6];
-   (*H_ji)[4] = temp[3]*(*J_i)[1] + temp[4]*(*J_i)[4] + temp[5]*(*J_i)[7];
-   (*H_ji)[5] = temp[3]*(*J_i)[2] + temp[4]*(*J_i)[5] + temp[5]*(*J_i)[8];
-   (*H_ji)[6] = temp[6]*(*J_i)[0] + temp[7]*(*J_i)[3] + temp[8]*(*J_i)[6];
-   (*H_ji)[7] = temp[6]*(*J_i)[1] + temp[7]*(*J_i)[4] + temp[8]*(*J_i)[7];
-   (*H_ji)[8] = temp[6]*(*J_i)[2] + temp[7]*(*J_i)[5] + temp[8]*(*J_i)[8];
-
-   /* b_j = (J_j)' i e_ij */
-   b_j->x = temp[0]*e_ij->x + temp[1]*e_ij->y + temp[2]*e_ij->t;
-   b_j->y = temp[3]*e_ij->x + temp[4]*e_ij->y + temp[5]*e_ij->t;
-   b_j->t = temp[6]*e_ij->x + temp[7]*e_ij->y + temp[8]*e_ij->t;
-
-}
-
-int insert_information_matrix_values(int xi, int xj, m33 * H_ii, m33 * H_ji, m33 * H_jj, mt * values, hash * table, int value) {
+   /* values for keeping track of our position in the values 
+    * array.                                                */
    int v_pos, h_pos_i = xi * 3, h_pos_j = xj * 3;
-   /* insert the 3x3 matrix H_ii into the list of triplets. Note
-    * that we need to check for and mark existance of these
-    * values as we may have to add to them later on and cannot
-    * explicitly allocate the matrix.                           */
-   if ( (v_pos = get_entry(long_from_ints(xi,xi),table)) == -1) {
-      /* there is no curent entry for this value, make one */
-      v_pos = value;
-      value += 6; /* only 6 values for H_ii, it is on the
-                     diagonal, so the upper half is symmetric */
-      add_entry(long_from_ints(xi,xi),v_pos,table);
 
-      /* set the column and row indices for these values
-       * in the final matrix H. These values are laid out
-       * the same way as the symmetric3x3 struct. We proceed
-       * down a row and then drop rows when we hit the diagonal
-       * value                                                 */
-      values[v_pos  ].col = h_pos_i  ; values[v_pos  ].row = h_pos_i  ;
-      values[v_pos+1].col = h_pos_i  ; values[v_pos+1].row = h_pos_i+1;
-      values[v_pos+2].col = h_pos_i+1; values[v_pos+2].row = h_pos_i+1;
-      values[v_pos+3].col = h_pos_i  ; values[v_pos+3].row = h_pos_i+2;
-      values[v_pos+4].col = h_pos_i+1; values[v_pos+4].row = h_pos_i+2;
-      values[v_pos+5].col = h_pos_i+2; values[v_pos+5].row = h_pos_i+2;
+   /* we are doing some fancy bitwise stuff here but it is normally
+    * the best way to do these things. The value 1 will indicate 
+    * that xi is a fixed node and the value 2 will indicate that xj
+    * is fixed. The value 3 will also occur, and this is when both
+    * values are fixed. Here we simply exit because no values will
+    * be added to our information matrix                            */
+   int usage = (member_set(xi,fixed) | (member_set(xj,fixed) << 1));
+
+   /* perform operations based on which values are fixed and which aren't */
+   switch(usage) {
+      /* no values are fixed. Compute all of H_ii, H_ji, H_jj and insert
+       * it into the values array.                                      */
+      case 0:
+         /* Because we only store the lower diagonal portion of the matrix H,
+          * we need to be careful about which block we compute. Our goal is
+          * H_ji, but if xi is greater than xj we would end up computing
+          * H_ij instead, which is in the upper diagonal area of H. To avoid
+          * this, we will swap some of our operations and actually compute
+          * H_ji for this case, hence the branch.                           */
+         if (xi > xj) {
+
+            /* H_ii = (J_i)' i J_i */
+            m33_A_transpose_mult_B_symmetric(temp,(*J_i),(*i));
+            sm33_A_mult_B(H_ii,temp,(*J_i));
+
+            /* b_i = (J_i)' i e_ij */
+            pv_A_transpose_mult_b(b_i,temp,(*e_ij));
+
+            /* H_ij = (J_i)' i J_j */
+            m33_A_mult_B(H_xx,temp,(*J_j));
+
+            /* H_jj = (J_j)' i J_j */
+            m33_A_transpose_mult_B_symmetric(temp,(*J_j),(*i));
+            sm33_A_mult_B(H_jj,temp,(*J_j));
+
+            /* b_j = (J_j)' i e_ij */
+            pv_A_transpose_mult_b(b_j,temp,(*e_ij));
+
+            /* Insert the 3x3 matrix H_ji into the values array, allocating
+             * space if there was none and updating the slots afterwards. */
+            if ( (v_pos = get_entry(long_from_ints(xi,xj),table)) == -1) {
+               v_pos = value;
+               value += 9; /* we do 9 because we are adding a 
+                              full 3x3 matrix                */
+               add_entry(long_from_ints(xi,xj),v_pos,table);
+
+               values_allocate_block(values,v_pos,h_pos_j,h_pos_i);
+            }
+            values_fill_block(values,v_pos,H_xx);
+         }
+         else {
+
+            /* H_jj = (J_j)' i J_j */
+            m33_A_transpose_mult_B_symmetric(temp,(*J_j),(*i));
+            sm33_A_mult_B(H_jj,temp,(*J_j));
+
+            /* b_j = (J_j)' i e_ij */
+            pv_A_transpose_mult_b(b_j,temp,(*e_ij));
+
+            /* H_ji = (J_j)' i J_i */
+            m33_A_mult_B(H_xx,temp,(*J_i));
+
+            /* H_ii = (J_i)' i J_i */
+            m33_A_transpose_mult_B_symmetric(temp,(*J_i),(*i));
+            sm33_A_mult_B(H_ii,temp,(*J_i));
+
+            /* b_i = (J_i)' i e_ij */
+            pv_A_transpose_mult_b(b_i,temp,(*e_ij));
+
+
+            /* this block will be slightly different from the
+             * previous branch, as the positions of
+             * h_pos_i,h_pos_j will be flipped. We do not flip
+             * xi,xj because we want the position in values of
+             * competing operations to point to the same locations. */
+            if ( (v_pos = get_entry(long_from_ints(xi,xj),table)) == -1) {
+               v_pos = value;
+               value += 9; 
+
+               add_entry(long_from_ints(xi,xj),v_pos,table);
+
+               values_allocate_block(values,v_pos,h_pos_i,h_pos_j);
+            }
+            values_fill_block(values,v_pos,H_xx);
+
+         }
+
+         /* insert error at position i in the vector b 
+          * note that each error contains three values,
+          * x, y and 0. This is the reason for the
+          * multiplication by three. Additionally, 
+          * because in our final system we are solving
+          * for -b, we will subtract these values instead
+          * of adding them                               */
+         b[h_pos_i  ] -= b_i.x;
+         b[h_pos_i+1] -= b_i.y;
+         b[h_pos_i+2] -= b_i.t;
+
+         /* insert error at position j in the vector b */
+         b[h_pos_j  ] -= b_j.x;
+         b[h_pos_j+1] -= b_j.y;
+         b[h_pos_j+2] -= b_j.t;
+
+         /* insert the 3x3 matrix H_ii into the list of triplets. Note
+          * that we need to check for and mark existance of these
+          * values as we may have to add to them later on and cannot
+          * explicitly allocate the matrix.                           */
+         if ( (v_pos = get_entry(long_from_ints(xi,xi),table)) == -1) {
+            /* there is no curent entry for this value, make one */
+            v_pos = value;
+            value += 6; /* only 6 values for H_ii, it is on the
+                           diagonal, so the upper half is symmetric */
+            add_entry(long_from_ints(xi,xi),v_pos,table);
+
+            /* set the column and row indices for these values
+             * in the final matrix H. These values are laid out
+             * the same way as the symmetric3x3 struct. We proceed
+             * down a row and then drop rows when we hit the diagonal
+             * value                                                 */
+            values_allocate_diagonal(values,v_pos,h_pos_i);
+         }
+         /* now we can insert the values. We will go by 
+          * rows, so H_xx[1][2] = H_xx[4]*/
+         values_fill_diagonal(values,v_pos,H_ii);
+
+         /* repeat our actions for the matrix H_jj */
+         if ( (v_pos = get_entry(long_from_ints(xj,xj),table)) == -1) {
+            v_pos = value;
+            value += 6; 
+            add_entry(long_from_ints(xj,xj),v_pos,table);
+
+            values_allocate_diagonal(values,v_pos,h_pos_j);
+         }
+         values_fill_diagonal(values,v_pos,H_jj);
+
+      break;
+      /* Our xi is a fixed node. There is no need to calculate it's
+       * jacobian or the shared jacobians, as the entire row and column
+       * of xi is being suppressed. Do add placeholders though.        */
+      case 1:
+
+            /* H_jj = (J_j)' i J_j */
+            m33_A_transpose_mult_B_symmetric(temp,(*J_j),(*i));
+            sm33_A_mult_B(H_ii,temp,(*J_j));
+
+            /* b_i = (J_i)' i e_ij */
+            pv_A_transpose_mult_b(b_j,temp,(*e_ij));
+
+            /* insert error at position i in the vector b */
+            b[h_pos_j  ] -= b_j.x;
+            b[h_pos_j+1] -= b_j.y;
+            b[h_pos_j+2] -= b_j.t;
+
+            /* insert H_ii into values array */
+            if ( (v_pos = get_entry(long_from_ints(xj,xj),table)) == -1) {
+               v_pos = value;
+               value += 6; 
+
+               add_entry(long_from_ints(xj,xj),v_pos,table);
+
+               values_allocate_diagonal(values,v_pos,h_pos_j);
+            }
+            values_fill_diagonal(values,v_pos,H_jj);
+
+            /* insert placeholder for H_ii */
+            if ( (v_pos = get_entry(long_from_ints(xi,xi),table)) == -1) {
+               v_pos = value;
+               value += 3; 
+               add_entry(long_from_ints(xi,xi),v_pos,table);
+
+               values_placehold_diagonal(values,v_pos,h_pos_i);
+            }
+
+      break;
+      /* Our xj is a fixed node. There is no need to calculate it's
+       * jacobian or the shared jacobians, as the entire row and column
+       * of xj is being suppressed. Do add placeholders though.        */
+      case 2:
+
+            /* H_ii = (J_i)' i J_i */
+            m33_A_transpose_mult_B_symmetric(temp,(*J_i),(*i));
+            sm33_A_mult_B(H_ii,temp,(*J_i));
+
+            /* b_i = (J_i)' i e_ij */
+            pv_A_transpose_mult_b(b_i,temp,(*e_ij));
+
+            /* insert error at position i in the vector b */
+            b[h_pos_i  ] -= b_i.x;
+            b[h_pos_i+1] -= b_i.y;
+            b[h_pos_i+2] -= b_i.t;
+
+            /* insert H_ii into values array */
+            if ( (v_pos = get_entry(long_from_ints(xi,xi),table)) == -1) {
+               v_pos = value;
+               value += 6; 
+
+               add_entry(long_from_ints(xi,xi),v_pos,table);
+
+               values_allocate_diagonal(values,v_pos,h_pos_i);
+            }
+            values_fill_diagonal(values,v_pos,H_ii);
+
+            /* insert placeholder for H_jj */
+            if ( (v_pos = get_entry(long_from_ints(xj,xj),table)) == -1) {
+               v_pos = value;
+               value += 3; 
+               add_entry(long_from_ints(xj,xj),v_pos,table);
+
+               values_placehold_diagonal(values,v_pos,h_pos_j);
+            }
+
+      break;
+      /* both of the nodes are fixed. Add placeholders and exit */
+      case 3:
+
+            /* insert placeholder for H_ii */
+            if ( (v_pos = get_entry(long_from_ints(xi,xi),table)) == -1) {
+               v_pos = value;
+               value += 3; 
+               add_entry(long_from_ints(xi,xi),v_pos,table);
+
+               values_placehold_diagonal(values,v_pos,h_pos_i);
+            }
+
+            /* insert placeholder for H_jj */
+            if ( (v_pos = get_entry(long_from_ints(xj,xj),table)) == -1) {
+               v_pos = value;
+               value += 3; 
+               add_entry(long_from_ints(xj,xj),v_pos,table);
+
+               values_placehold_diagonal(values,v_pos,h_pos_j);
+            }
+
+      break;
    }
-   /* now we can insert the values. We will go by 
-    * rows, so H_xx[1][2] = H_xx[4]*/
-   values[v_pos  ].val += (*H_ii)[0];
-   values[v_pos+1].val += (*H_ii)[3];
-   values[v_pos+2].val += (*H_ii)[4];
-   values[v_pos+3].val += (*H_ii)[6];
-   values[v_pos+4].val += (*H_ii)[7];
-   values[v_pos+5].val += (*H_ii)[8];
-
-   /* repeat our actions for the matrix H_jj */
-   if ( (v_pos = get_entry(long_from_ints(xj,xj),table)) == -1) {
-      v_pos = value;
-      value += 6; 
-      add_entry(long_from_ints(xj,xj),v_pos,table);
-
-      values[v_pos  ].col = h_pos_j  ; values[v_pos  ].row = h_pos_j  ;
-      values[v_pos+1].col = h_pos_j  ; values[v_pos+1].row = h_pos_j+1;
-      values[v_pos+2].col = h_pos_j+1; values[v_pos+2].row = h_pos_j+1;
-      values[v_pos+3].col = h_pos_j  ; values[v_pos+3].row = h_pos_j+2;
-      values[v_pos+4].col = h_pos_j+1; values[v_pos+4].row = h_pos_j+2;
-      values[v_pos+5].col = h_pos_j+2; values[v_pos+5].row = h_pos_j+2;
-   }
-   values[v_pos  ].val += (*H_jj)[0];
-   values[v_pos+1].val += (*H_jj)[3];
-   values[v_pos+2].val += (*H_jj)[4];
-   values[v_pos+3].val += (*H_jj)[6];
-   values[v_pos+4].val += (*H_jj)[7];
-   values[v_pos+5].val += (*H_jj)[8];
-
-   /* now we proceed to the matrix H_ji. This
-    * one is a little different, as it not symmetric
-    * and should sit below the diagonal. Because of
-    * this, we need to swap xj and xi if xj > xi. This
-    * will work because the matrix we are passed as H_ji
-    * is assumed to be the lower diagonal one. If this is
-    * not the case, this assumption is incorect and the 
-    * information matrix will be ill-formed              */
-   if (xi > xj) {
-      int temp = xj;
-      xj = xi;
-      xi = temp;
-      temp = h_pos_i;
-      h_pos_i = h_pos_j;
-      h_pos_j = temp;
-
-   }
-   /* We can proceed in an identical fashion as the previous blocks,
-    * except that we insert the entire matrix instead of just the diagonal
-    */
-   if ( (v_pos = get_entry(long_from_ints(xi,xj),table)) == -1) {
-      v_pos = value;
-      value += 9; /* we do 9 this time because we are adding a 
-                     full 3x3 matrix                          */
-      add_entry(long_from_ints(xi,xj),v_pos,table);
-
-      values[v_pos  ].col = h_pos_i  ; values[v_pos  ].row = h_pos_j  ;
-      values[v_pos+1].col = h_pos_i+1; values[v_pos+1].row = h_pos_j  ;
-      values[v_pos+2].col = h_pos_i+2; values[v_pos+2].row = h_pos_j  ;
-      values[v_pos+3].col = h_pos_i  ; values[v_pos+3].row = h_pos_j+1;
-      values[v_pos+4].col = h_pos_i+1; values[v_pos+4].row = h_pos_j+1;
-      values[v_pos+5].col = h_pos_i+2; values[v_pos+5].row = h_pos_j+1;
-      values[v_pos+6].col = h_pos_i  ; values[v_pos+6].row = h_pos_j+2;
-      values[v_pos+7].col = h_pos_i+1; values[v_pos+7].row = h_pos_j+2;
-      values[v_pos+8].col = h_pos_i+2; values[v_pos+8].row = h_pos_j+2;
-   }
-   values[v_pos  ].val += (*H_ji)[0];
-   values[v_pos+1].val += (*H_ji)[1];
-   values[v_pos+2].val += (*H_ji)[2];
-   values[v_pos+3].val += (*H_ji)[3];
-   values[v_pos+4].val += (*H_ji)[4];
-   values[v_pos+5].val += (*H_ji)[5];
-   values[v_pos+6].val += (*H_ji)[6];
-   values[v_pos+7].val += (*H_ji)[7];
-   values[v_pos+8].val += (*H_ji)[8];
 
    /* we need to know to what position we
     * have advanced in our values vector */
@@ -276,12 +356,23 @@ int add_edge(pgn_handle xi, pgn_handle xj, pv * observation, sm33 * information,
    return new;
 }
 
+int fix_node(pgn_handle node, pg * graph) {
+   /* basically just a wrapper over a set function */
+   return insert_set(node,graph->fixed_nodes);
+}
+
+void unfix_node(pgn_handle node, pg * graph) {
+   /* basically just a wrapper over a set function */
+   remove_set(node,graph->fixed_nodes);
+}
+
 pg * construct_pose_graph() {
    /* allocate our memory. We will start with 256
     * node and edge slots allocated              */
    pg * ret = malloc(sizeof(pg));
    ret->node = malloc(sizeof(pgn)*256);
    ret->edge = malloc(sizeof(pge)*256);
+   ret->fixed_nodes = construct_set();
 
    /* set initial status values */
    ret->node_count = 0;
@@ -295,6 +386,7 @@ pg * construct_pose_graph() {
 void free_pose_graph(pg * graph) {
    /* deallocate our memory and free
     * graph                         */
+   destruct_set(graph->fixed_nodes);
    free(graph->node);
    free(graph->edge);
    free(graph);
@@ -311,6 +403,9 @@ int optimize(pg * graph, gsod * settings) {
    int step_limit = default_step_limit;
    /* point at which we stop optimization */
    float cutoff = default_cutoff;
+
+   /* the final value we return */
+   int ret_val = 0;
 
    /* used in timing various operations */
    clock_t t_limit = CLK_MAX, t_construct = 0, t_solve = 0, t_total = clock();
@@ -355,59 +450,34 @@ int optimize(pg * graph, gsod * settings) {
       clear_table(table);
       total_change = 0.0;
 
-      int value = 0, b_pos, xi, xj;
-      m33 J_i, J_j, H_ii, H_ji, H_jj;
+      int value = 0, xi, xj, b_pos;
+      sm33 H_ii, H_jj;
+      m33 J_i, J_j, H_ji;
       pv e_ij, b_i, b_j;
       for (int i = 0; i < graph->edge_count; ++i) {
-
-         xi = graph->edge[i].xi;
-         xj = graph->edge[i].xj;
 
          /* perform computation to get our jacobian blocks H_ii, H_ji, H_jj
           * and our error values b_i and b_j. These are the parameters to the
           * equations we will use the choloskey decomposition to solve       */
          compute_jacobians_and_error(&graph->edge[i],graph,&J_i,&J_j,&e_ij);
 
-         /* if xi > xj we need to swap our jacobians when we compute our
-          * constraints. This will result in the production of the lower
-          * diagonal H_ji as opposed to H_ij, keeping our values list to
-          * only the lower diagonal ones                                 */
-         if (xi > xj)
-            compute_constraints_and_coefficients(&J_j,&J_i,&e_ij,&graph->edge[i].information,
-                                                 &H_jj,&H_ji,&H_ii,&b_j,&b_i);
-         else
-            compute_constraints_and_coefficients(&J_i,&J_j,&e_ij,&graph->edge[i].information,
-                                                 &H_ii,&H_ji,&H_jj,&b_i,&b_j);
+         /* compute the sections of our information matrix H that we can derive from this
+          * edge, as well as the cooresponding error values of b. Add these to the
+          * appropriate data structures, and return the head of the stack pointer in
+          * the values array. This method takes so many arguments because this is a
+          * bottleneck and one of the ways to reduce it is with some clever optimizations
+          * which can only be realized by packing a lot into this one function.           */
+         value = compute_constraints_and_fill_information_matrix(graph->edge[i].xi,graph->edge[i].xj,
+               &J_i,&J_j,&e_ij,&graph->edge[i].information,b,values,table,graph->fixed_nodes,value);
 
-         /* insert error at position i in the vector b 
-          * note that each error contains three values,
-          * x, y and 0. This is the reason for the
-          * multiplication by three. Additionally, 
-          * because in our final system we are solving
-          * for -b, we will subtract these values instead
-          * of adding them                               */
-         b_pos = xi * 3;
-         b[b_pos  ] -= b_i.x;
-         b[b_pos+1] -= b_i.y;
-         b[b_pos+2] -= b_i.t;
-
-         /* insert error at position j in the vector b */
-         b_pos = xj * 3;
-         b[b_pos  ] -= b_j.x;
-         b[b_pos+1] -= b_j.y;
-         b[b_pos+2] -= b_j.t;
-
-         /* insert matrices H_ii,H_ij,H_jj into the information matrix H */
-         value = insert_information_matrix_values(xi,xj,&H_ii,&H_ji,&H_jj,values,table,value);
       }
 
-      /* fix the first entry to make our system well defined. Because
-       * our insertion function inserts the diagonal matricies first, 
-       * we know that the first entry in values will be diagonal. Add
-       * the identity matrix to this entry                           */
-      values[0].val += 1;
-      values[2].val += 1;
-      values[5].val += 1;
+      /* fix the first entry to make our system well defined. This
+       * is done by adding the identity matrix to the first diagonal */
+      int fixed_val = get_entry(0,table);
+      values[fixed_val  ].val += 1;
+      values[fixed_val+2].val += 1;
+      values[fixed_val+5].val += 1;
 
       /* now we have enough information to allocate our matricies if
        * they have not yet been allocated. Note that value now holds
@@ -449,7 +519,8 @@ int optimize(pg * graph, gsod * settings) {
             settings->t_total = clock() - t_total;
             settings->end_state = OES_failure;
          }
-         return -1;
+         ret_val = -1;
+         goto cleanup_exit;
       }
 
       /* update our poses given the solution to the 
@@ -467,7 +538,8 @@ int optimize(pg * graph, gsod * settings) {
             settings->t_total = clock() - t_total;
             settings->end_state = OES_time_limit;
          }
-         return -1;
+         ret_val = -1;
+         goto cleanup_exit;
       }
 
       /* if step limit was zero this will go forever */
@@ -476,7 +548,8 @@ int optimize(pg * graph, gsod * settings) {
             settings->t_total = clock() - t_total;
             settings->end_state = OES_step_limit;
          }
-         return -1;
+         ret_val = -1;
+         goto cleanup_exit;
       }
 
       /* if the movement of our optimizer is 
@@ -488,6 +561,14 @@ int optimize(pg * graph, gsod * settings) {
          break;
    }
 
+   /* set return values for the settings structure */
+   if (settings != NULL) {
+      settings->t_total = clock() - t_total;
+      settings->end_state = OES_success;
+   }
+
+cleanup_exit:
+
    /* cleanup all the memory we allocated */
    destruct_table(table);
    free(b);
@@ -495,13 +576,7 @@ int optimize(pg * graph, gsod * settings) {
    free_packed_column_matrix(H);
    free_packed_column_matrix(L);
 
-   /* set return values for the settings structure */
-   if (settings != NULL) {
-      settings->t_total = clock() - t_total;
-      settings->end_state = OES_success;
-   }
-
-   return 0;
+   return ret_val;
 
 }
 

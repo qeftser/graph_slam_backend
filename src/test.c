@@ -215,7 +215,7 @@ int main(void) {
    }
    {
       hash * table = construct_table(1); 
-      TEST("table get non-entry 1",(get_entry(5,table) == -1));
+      TEST("table get non-entry 2",(get_entry(5,table) == -1));
       destruct_table(table);
    }
    {
@@ -385,55 +385,20 @@ int main(void) {
       add_node(pos2,graph);
       add_edge(0,1,&obs12,&information,graph);
 
-      int b_pos, v_pos, xi, xj;
-      m33 J_i, J_j, H_ii, H_ji, H_jj;
-      pv e_ij, b_i, b_j;
-      compute_jacobians_and_error(&graph->edge[0],graph,&J_i,&J_j,&e_ij);
-      compute_constraints_and_coefficients(&J_i,&J_j,&e_ij,&graph->edge[0].information,
-                                           &H_ii,&H_ji,&H_jj,&b_i,&b_j);
-      TEST("ensure H and b values",(fabs(H_ii[0] - 2) < 0.00001) && (fabs(H_ii[1] - 1) < 0.00001) &&
-                                   (fabs(H_ii[2] + 1) < 0.00001) && (fabs(H_ii[3] - 1) < 0.00001) &&
-                                   (fabs(H_ii[4] - 2) < 0.00001) && (fabs(H_ii[5] + 2) < 0.00001) &&
-                                   (fabs(H_ii[6] + 1) < 0.00001) && (fabs(H_ii[7] + 2) < 0.00001) &&
-                                   (fabs(H_ii[8] - 2) < 0.00001) && (fabs(H_jj[0] - 2) < 0.00001) &&
-                                   (fabs(H_jj[1] - 1) < 0.00001) && (fabs(H_jj[2] - 1) < 0.00001) &&
-                                   (fabs(H_jj[3] - 1) < 0.00001) && (fabs(H_jj[4] - 2) < 0.00001) &&
-                                   (fabs(H_jj[5] + 1) < 0.00001) && (fabs(H_jj[6] - 1) < 0.00001) &&
-                                   (fabs(H_jj[7] + 1) < 0.00001) && (fabs(H_jj[8] - 2) < 0.00001) &&
-                                   (fabs(H_ji[0] + 2) < 0.00001) && (fabs(H_ji[1] + 1) < 0.00001) &&
-                                   (fabs(H_ji[2] - 1) < 0.00001) && (fabs(H_ji[3] + 1) < 0.00001) &&
-                                   (fabs(H_ji[4] + 2) < 0.00001) && (fabs(H_ji[5] - 2) < 0.00001) &&
-                                   (fabs(H_ji[6] + 1) < 0.00001) && (fabs(H_ji[7] - 1) < 0.00001) &&
-                                   (fabs(H_ji[8] + 1) < 0.00001) && (fabs(b_i.x) < 0.00001) && 
-                                   (fabs(b_i.y) < 0.00001) && (fabs(b_i.t) < 0.00001) &&
-                                   (fabs(b_j.x) < 0.00001) && (fabs(b_j.y) < 0.00001) && (fabs(b_j.t) < 0.00001));
-      free_pose_graph(graph);
-   }
-   {
-      pg * graph = construct_pose_graph();
-      pv pos1 = { 1, 1, 0 };
-      pv pos2 = { 2, 1, M_PI/2 };
-      pv obs12 = a_from_b(pos2,pos1);
-
-      sm33 information = { 2, -1, 2, -1, -1, 2 };
-
-      add_node(pos1,graph);
-      add_node(pos2,graph);
-      add_edge(0,1,&obs12,&information,graph);
-
       int value = 0, b_pos, v_pos;
-      m33 J_i, J_j, H_ii, H_ji, H_jj;
-      pv e_ij, b_i, b_j;
+      m33 J_i, J_j;
+      pv e_ij;
       compute_jacobians_and_error(&graph->edge[0],graph,&J_i,&J_j,&e_ij);
-      compute_constraints_and_coefficients(&J_i,&J_j,&e_ij,&graph->edge[0].information,
-                                           &H_ii,&H_ji,&H_jj,&b_i,&b_j);
 
       hash  * table = construct_table(graph->edge_count);
       mt * values = malloc(sizeof(mt)* 21 *graph->edge_count);
       bzero(values,sizeof(mt)* 21 *graph->edge_count);
+      float * b = malloc(sizeof(float)*graph->node_count*3);
+      bzero(b,sizeof(float)*graph->node_count*3);
       clear_table(table);
 
-      value = insert_information_matrix_values(0,1,&H_ii,&H_ji,&H_jj,values,table,value);
+      value = compute_constraints_and_fill_information_matrix(0,1,&J_i,&J_j,&e_ij,&information,b,values,
+                                                              table,graph->fixed_nodes,value);
       pcmat * H = construct_packed_column_matrix(values,graph->node_count*3,value);
       TEST("ensure correct H structure",(value == 21) &&
                                         (fabs(H->val[0] - 2) < 0.00001) && (fabs(H->val[1] - 1) < 0.00001) &&
@@ -450,6 +415,7 @@ int main(void) {
       destruct_table(table);
       free_packed_column_matrix(H);
       free(values);
+      free(b);
       free_pose_graph(graph);
    }
    {
@@ -465,6 +431,10 @@ int main(void) {
          add_node(poses[i],graph);
          add_edge(i,(i+1)%4,&obs[i],&information,graph);
       }
+
+      gsod settings;
+      bzero(&settings,sizeof(gsod));
+      settings.step_limit = 1;
 
       optimize(graph,NULL);
 
@@ -500,6 +470,102 @@ int main(void) {
                                                              poses[1].x,12.0,poses[1].y,1.0,poses[1].t,M_PI/2,
                                                              poses[2].x,12.0,poses[2].y,2.0,poses[2].t,M_PI,
                                                              poses[3].x,11.0,poses[3].y,2.0,poses[3].t,-M_PI/2));
+      free_pose_graph(graph);
+   }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 2, 1, 2, 1, 1, 2 };
+      
+      poses[0].x += 10;
+
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      gsod data; 
+      bzero(&data,sizeof(data));
+
+      optimize(graph,&data);
+
+      TEST("optimize sets gsod outputs",(data.t_total != 0) &&
+                                        (data.t_construct != 0) &&
+                                        (data.t_solve != 0) &&
+                                        (data.steps != 0) &&
+                                        (data.end_state == OES_success));
+      free_pose_graph(graph);
+   }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 2, 1, 2, 1, 1, 2 };
+      
+      poses[0].x += 10;
+
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      gsod data; 
+      bzero(&data,sizeof(data));
+      data.step_limit = 2;
+
+      optimize(graph,&data);
+
+      TEST("step limit works",(data.steps == 2) &&
+                              (data.end_state == OES_step_limit));
+      free_pose_graph(graph);
+   }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 2, 1, 2, 1, 1, 2 };
+      
+      poses[0].x += 10;
+
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      gsod data; 
+      bzero(&data,sizeof(data));
+      data.t_limit = 1;
+
+      optimize(graph,&data);
+
+      TEST("time limit works",(data.steps == 1) &&
+                              (data.end_state == OES_time_limit));
+      free_pose_graph(graph);
+   }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 0xffffffffffffffff, 0, 0xffffffffffffffff, 0, 0, 0xffffffffffffffff };
+      
+      poses[0].x += 10;
+
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      gsod data; 
+      bzero(&data,sizeof(data));
+
+      optimize(graph,&data);
+
+      TEST("divergence break works",(data.end_state == OES_failure));
       free_pose_graph(graph);
    }
 
