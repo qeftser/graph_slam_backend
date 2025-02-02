@@ -345,9 +345,16 @@ There is also this if you want to use it:
 
 ## Closing Thoughts
 
-I personally think graph slam is an impressive algorithm, and am
+I personally think graph slam is a nice algorithm, and am
 impressed with the people who were able to construct such a useful
-mathematical model out of the robotics slam problem.
+mathematical model out of the robotics slam problem. 
+   
+I would like to leave a shoutout to Cyrill Stachniss and Sebastian
+Thrun, who are great researchers and teachers whose material I benefitted
+from greatly during this project.   
+
+I would also like to thank Ump45(404) and Rinne Ohara for the indirect
+motivation on this project. \:wa:waq
 
 ## TODO
 
