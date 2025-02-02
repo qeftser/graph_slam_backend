@@ -77,7 +77,7 @@ int member_set(int element, set * s) {
        * only be 1 if it has been added                     */
       int block_pos = (element % SET_BLOCK_DIVISOR) / 8;
       int block_offset = element % 8;
-      return (*s->blocks[block_num])[block_pos] & (1 << block_offset);
+      return ((*s->blocks[block_num])[block_pos] & (1 << block_offset) ? 1 : 0);
 
    }
 

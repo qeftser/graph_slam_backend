@@ -568,6 +568,30 @@ int main(void) {
       TEST("divergence break works",(data.end_state == OES_failure));
       free_pose_graph(graph);
    }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 2, 1, 2, 1, 1, 2 };
+
+      poses[3].x += 10;
+      
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      fix_node(3,graph);
+
+      optimize(graph,NULL);
+
+      for(int i = 0; i < 4; ++i)
+         poses[i] = graph->node[i].pos;
+
+      TEST("check fixing node",check_equality_double(0.0001,3,poses[3].x,11.0,poses[3].y,2.0,poses[3].t,-M_PI/2));
+      free_pose_graph(graph);
+   }
 
 
    printf("total: %d tests, %d passed (%.2f%%)\n",total,passing,((double)passing/total)*100);

@@ -218,7 +218,7 @@ int compute_constraints_and_fill_information_matrix(int xi, int xj, m33 * J_i, m
 
             /* H_jj = (J_j)' i J_j */
             m33_A_transpose_mult_B_symmetric(temp,(*J_j),(*i));
-            sm33_A_mult_B(H_ii,temp,(*J_j));
+            sm33_A_mult_B(H_jj,temp,(*J_j));
 
             /* b_i = (J_i)' i e_ij */
             pv_A_transpose_mult_b(b_j,temp,(*e_ij));
@@ -227,7 +227,7 @@ int compute_constraints_and_fill_information_matrix(int xi, int xj, m33 * J_i, m
             b[h_pos_j  ] -= b_j.x;
             b[h_pos_j+1] -= b_j.y;
             b[h_pos_j+2] -= b_j.t;
-
+            
             /* insert H_ii into values array */
             if ( (v_pos = get_entry(long_from_ints(xj,xj),table)) == -1) {
                v_pos = value;
@@ -475,9 +475,16 @@ int optimize(pg * graph, gsod * settings) {
       /* fix the first entry to make our system well defined. This
        * is done by adding the identity matrix to the first diagonal */
       int fixed_val = get_entry(0,table);
-      values[fixed_val  ].val += 1;
-      values[fixed_val+2].val += 1;
-      values[fixed_val+5].val += 1;
+      if (member_set(0,graph->fixed_nodes)) {
+         values[fixed_val  ].val += 1;
+         values[fixed_val+1].val += 1;
+         values[fixed_val+2].val += 1;
+      }
+      else {
+         values[fixed_val  ].val += 1;
+         values[fixed_val+2].val += 1;
+         values[fixed_val+5].val += 1;
+      }
 
       /* now we have enough information to allocate our matricies if
        * they have not yet been allocated. Note that value now holds
@@ -489,6 +496,7 @@ int optimize(pg * graph, gsod * settings) {
       }
       else
          load_packed_column_matrix(values,H);
+
 
       if (settings != NULL) {
          settings->t_construct += clock() - t_construct;

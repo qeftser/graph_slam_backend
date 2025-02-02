@@ -305,8 +305,8 @@ pcmat * compute_symbolic_factorization(pcmat * A) {
       }
       /* set up the kth column of L */
       make_column(k,ma,L);
-      /* update the babysitter */
-      if (k != L->n-1) {
+      /* update the babysitter, provided this column has children */
+      if (L->colp[k] + 1 != L->colp[k+1]) {
          j = L->rx[L->colp[k] + 1]; /* j is the parent of k */
          while (j != -1) {
             jt = j; j = bs[j];
