@@ -122,7 +122,7 @@ will be. Note again that all nodes need at least one edge, and more
 edges are usually better for results than less. Be careful though,
 edges should hold positional data you are more certain of, as if you
 add an edge that is incorrect, it will drag your node in the wrong
-direction. There are a few important peices to an edge. The first
+direction. There are a few important pieces to an edge. The first
 is the handles of the two nodes involved. The first node is the
 reference node. It basically says that we are viewing the second
 node from it's perspective. It is important to keep that in mind,
@@ -178,7 +178,7 @@ typedef /* ... */ {
     add_edge(A,B,&movement,&information,graph);
 
 ```
-Once we have collected enough edges, and useually after we have returned
+Once we have collected enough edges, and usually after we have returned
 to a previously visited location and produced edges that relate nodes
 that are many timesteps away from ones at our current position, we can
 move to the optimization phase.
@@ -322,7 +322,7 @@ Because we are fixing nodes in a nonlinear system and applying a linear
 solver, we introduce the possibility that we will never find a local
 minimum for our system. Because of this possiblity, it is recommended
 to do some careful testing with this feature, as the optimize function
-may never return... You can also midigate this by setting a step or time
+may never return... You can also mitigate this by setting a step or time
 limit as described above. The nodes you get back should be useable, they
 will simply be osillating between two local minima.
 
