@@ -25,14 +25,54 @@ Clone the repository and execute the following command:
 $ sudo make install
 ```
 Note: The install command assumes that you are using a unix-like file system
-and will fail on Windows or MacOS.
+and will fail on Windows or MacOS.   
+   
+There is also a CMakeLists.txt for building this project as a package
+to be used in c++ cmake projects. This can be used in the following 
+way:
+
+```
+$ mkdir build && cd build
+$ cmake ..
+$ sudo make install
+```
+
+This allows the find_package call to be used to include the 
+project instead of target_include_directories:
+```
+
+/* using cmake build & install */
+
+find_package(GraphSlamBackend REQUIRED)
+...
+target_link_libraries(my_lib GraphSlamBackend::graph_slam_backend)
+
+/* using make build & install */
+
+target_link_libraries(my_lib graph_slam_backend)
+
+```
+
+It is kind of redundant to have two build systems, but I spent
+a while googling on how to do cmake packages, so I have left it
+in here partly for future reference for myself.
 
 ## Usage
 
 Provided you have completed the previous steps, you can include
 the backend in your project using:
 ```
+
+/* in c projects */
+
 #include <graph_slam_backend/graph_slam.h>
+
+/* in c++ projects */
+
+extern "C" {
+#include <graph_slam_backend/graph_slam.h>
+}
+
 ```
 
 ### Setup
