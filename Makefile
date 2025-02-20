@@ -15,7 +15,7 @@ OBJ_FILES := $(SRC_FILES:.c=.o)
 PREFIX := /usr/local
 
 # the library name 
-ALIB := graph_slam_backend.a
+ALIB := libgraph_slam_backend.a
 
 all: $(OBJ_FILES)
 
