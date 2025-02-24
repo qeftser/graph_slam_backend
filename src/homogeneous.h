@@ -17,9 +17,9 @@
 
 /* a vector in homogeneous representation.*/
 typedef struct homogeneous_vector {
-   float x;
-   float y;
-   float w;
+   gsb_float x;
+   gsb_float y;
+   gsb_float w;
 } hv;
 
 /* a matrix in homogeneous representation.
@@ -29,28 +29,28 @@ typedef struct homogeneous_vector {
 typedef struct homogeneous_transform {
    union {
       struct {
-         float c1, s1, tx;
-         float s2, c2, ty;
-         float z1, z2, w;
+         gsb_float c1, s1, tx;
+         gsb_float s2, c2, ty;
+         gsb_float z1, z2, w;
       };
-      float v[9];
+      gsb_float v[9];
    };
 } ht;
 
 /* return a homogeneous vector given x and y */
-hv construct_homogeneous_vector(float x, float y);
+hv construct_homogeneous_vector(gsb_float x, gsb_float y);
 /* return a homogeneous transformation given a 
  * 2d position vector                          */
 ht as_homogeneous_transformation(pv pos);
 /* return a homogeneous transformation with a rotation
  * of zero and x and y translations as given           */
-ht construct_homogeneous_translation(float trans_x, float trans_y);
+ht construct_homogeneous_translation(gsb_float trans_x, gsb_float trans_y);
 /* return a homogeneous transformation with a translation
  * of zero and a rotation of the given radians           */
-ht construct_homogeneous_rotation(float rad);
+ht construct_homogeneous_rotation(gsb_float rad);
 /* produce a full homogeneous transformation with x and y tranlations
  * defined, as well the rotation in radians                          */
-ht construct_homogeneous_transformation(float rad, float trans_x, float trans_y);
+ht construct_homogeneous_transformation(gsb_float rad, gsb_float trans_x, gsb_float trans_y);
 /* perform 3x3 matrix multiplication to combine two homogeneous
  * transformations, producing a new one                        */
 ht merge_homogeneous_transformation(ht * t1, ht * t2);

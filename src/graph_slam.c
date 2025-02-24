@@ -64,7 +64,7 @@ void compute_jacobians_and_error(pge * edge, pg * graph, m33 * J_i, m33 * J_j, p
 
 /* sucessor function of the above two functions */
 int compute_constraints_and_fill_information_matrix(int xi, int xj, m33 * J_i, m33 * J_j, pv * e_ij, sm33 * i,
-                                                    float * b, mt * values, hash * table, set * fixed,
+                                                    gsb_float * b, mt * values, hash * table, set * fixed,
                                                     int value) {
    /* intermediate values */
    m33 temp, H_xx;
@@ -397,12 +397,12 @@ int optimize(pg * graph, gsod * settings) {
    /* default number of cycles and limit
     * of granularity allowed            */
    static int default_step_limit = 0;
-   static float default_cutoff = 1e-4;
+   static gsb_float default_cutoff = 1e-4;
 
    /* total number of steps allowed */
    int step_limit = default_step_limit;
    /* point at which we stop optimization */
-   float cutoff = default_cutoff;
+   gsb_float cutoff = default_cutoff;
 
    /* the final value we return */
    int ret_val = 0;
@@ -426,7 +426,7 @@ int optimize(pg * graph, gsod * settings) {
 
    /* setup structures needed for computation */
    hash  * table = construct_table(graph->edge_count);
-   float * b = malloc(sizeof(float)* 3 *graph->node_count);
+   gsb_float * b = malloc(sizeof(gsb_float)* 3 *graph->node_count);
    mt * values = malloc(sizeof(mt)* 21 *graph->edge_count);
 
    /* our matrices will be allocated when we determine the
@@ -445,7 +445,7 @@ int optimize(pg * graph, gsod * settings) {
          t_construct = clock();
       }
 
-      bzero(b,sizeof(float)* 3 *graph->node_count);
+      bzero(b,sizeof(gsb_float)* 3 *graph->node_count);
       bzero(values,sizeof(mt)* 21 *graph->edge_count);
       clear_table(table);
       total_change = 0.0;

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 
-void print_full_matrix(float * M, int n) {
+void print_full_matrix(gsb_float * M, int n) {
    for (int i = 0; i < n; ++i) {
       printf("[ ");
       for (int j = 0; j < n; ++j) {
@@ -14,9 +14,9 @@ void print_full_matrix(float * M, int n) {
    }
 }
 
-float * basic_cholesky_factorization(float * A, int n) {
+gsb_float * basic_cholesky_factorization(gsb_float * A, int n) {
    /* L is our return matrix */
-   float * L = calloc(sizeof(float),n*n);
+   gsb_float * L = calloc(sizeof(gsb_float),n*n);
 
    /* copy the lower triangular section of A into L */
    for (int i = 0; i < n; ++i) {
@@ -63,7 +63,7 @@ pcmat * construct_packed_column_matrix(mt * values, int n, int nnz) {
    pcmat * ret = calloc(sizeof(pcmat),1);
    ret->colp = calloc(sizeof(int),n+1);
    ret->rx = calloc(sizeof(int),nnz);
-   ret->val = calloc(sizeof(float),nnz);
+   ret->val = calloc(sizeof(gsb_float),nnz);
 
    /* fill basic values */
    ret->n = n;
@@ -91,7 +91,7 @@ pcmat * allocate_packed_column_matrix(int n, int nnz) {
    pcmat * ret = calloc(sizeof(pcmat),1);
    ret->colp = calloc(sizeof(int),n+1);
    ret->rx = calloc(sizeof(int),nnz);
-   ret->val = calloc(sizeof(float),nnz);
+   ret->val = calloc(sizeof(gsb_float),nnz);
    ret->n = n;
    ret->nnz = nnz;
    return ret;
@@ -284,7 +284,7 @@ pcmat * compute_symbolic_factorization(pcmat * A) {
    L->n = A->n;
    L->colp = malloc(sizeof(int)*(L->n+1));
    L->rx = malloc(sizeof(int)*nnz);
-   L->val = malloc(sizeof(float)*nnz);
+   L->val = malloc(sizeof(gsb_float)*nnz);
 
    /* initialize babysitter and merge arrays */
    int * bs = malloc(sizeof(int)*L->n);
@@ -324,13 +324,13 @@ void perform_numerical_factorization(pcmat * A, pcmat * L) {
 
    /* an extra small value is needed to offset issues
     * with numerical stability */
-   static float epsilon = 0.0000001;
+   static gsb_float epsilon = 0.0000001;
 
    /* setup */
    rtmd * r = get_row_traversal_metadata(L);
-   float * accum = calloc(sizeof(float),A->n);
+   gsb_float * accum = calloc(sizeof(gsb_float),A->n);
    int ii, kx, i;
-   float Lkj, Lkkinv;
+   gsb_float Lkj, Lkkinv;
 
 
    for (kx = 0; kx < L->n; ++kx) { /* process column k */
@@ -365,7 +365,7 @@ void perform_numerical_factorization(pcmat * A, pcmat * L) {
    free_row_traversal_metadata(r);
 }
 
-void solve_system(pcmat * L, float * b) {
+void solve_system(pcmat * L, gsb_float * b) {
 
    /* solve for Ly = b */
    for (int j = 0; j < L->n; ++j) {

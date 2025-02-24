@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 
-hv construct_homogeneous_vector(float x, float y) {
+hv construct_homogeneous_vector(gsb_float x, gsb_float y) {
    hv ret = { x, y, 1 };
    return ret;
 }
@@ -15,21 +15,21 @@ ht as_homogeneous_transformation(pv pos) {
    return ret;
 }
 
-ht construct_homogeneous_translation(float trans_x, float trans_y) {
+ht construct_homogeneous_translation(gsb_float trans_x, gsb_float trans_y) {
    ht ret = { 1, 0, trans_x,
               0, 1, trans_y,
               0, 0, 1       };
    return ret;
 }
 
-ht construct_homogeneous_rotation(float rad) {
+ht construct_homogeneous_rotation(gsb_float rad) {
    ht ret = { cos(rad), -sin(rad), 0,
               sin(rad),  cos(rad), 0,
               0,         0,        1 };
    return ret;
 }
 
-ht construct_homogeneous_transformation(float rad, float trans_x, float trans_y) {
+ht construct_homogeneous_transformation(gsb_float rad, gsb_float trans_x, gsb_float trans_y) {
    ht ret = { cos(rad), -sin(rad), trans_x,
               sin(rad),  cos(rad), trans_y,
               0,         0,        1       };
@@ -72,7 +72,7 @@ ht invert_homogeneous_transformation(ht * t) {
                t->v[3] * t->v[7] - t->v[4] * t->v[6],
              -(t->v[0] * t->v[7] - t->v[1] * t->v[6]),
                t->v[0] * t->v[4] - t->v[1] * t->v[3]  };
-   float det = t->v[0] * ret.v[0] + t->v[3] * ret.v[3] + t->v[6] * ret.v[6];
+   gsb_float det = t->v[0] * ret.v[0] + t->v[3] * ret.v[3] + t->v[6] * ret.v[6];
    ret.v[0] /= det; ret.v[1] /= det; ret.v[2] /= det;
    ret.v[3] /= det; ret.v[4] /= det; ret.v[5] /= det;
    ret.v[6] /= det; ret.v[7] /= det; ret.v[8] /= det;

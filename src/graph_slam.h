@@ -40,17 +40,17 @@ typedef struct pose_graph_node {
 typedef struct symmetric_3x3_matrix {
    union {
       struct {
-         float a00,
-               a10, a11,
-               a20, a21, a22;
+         gsb_float a00,
+                   a10, a11,
+                   a20, a21, a22;
       };
-      float v[6];
+      gsb_float v[6];
    };
 } sm33;
 
 /* 3x3 matrix. Very nice. Stored
  * in row major order           */
-typedef float m33[9];
+typedef gsb_float m33[9];
 
 /* multiply the m33 A transpose by the
  * sm33 symmetric matrix B and store
@@ -245,7 +245,7 @@ void compute_jacobians_and_error(pge * edge, pg * graph, m33 * J_i, m33 * J_j, p
 /* Does all the math to combine the jacobians, error function, and information matrix into a 
  * system with H as the overall information matrix and b as the constraint vector.           */
 int compute_constraints_and_fill_information_matrix(int xi, int xj, m33 * J_i, m33 * J_j, pv * e_ij, sm33 * i,
-                                                    float * b, mt * values, hash * table, set * fixed,
+                                                    gsb_float * b, mt * values, hash * table, set * fixed,
                                                     int value);
 /* allocate the memory and setup the
  * values for the pose graph         */
@@ -270,7 +270,7 @@ pgn_handle add_node(pv pos, pg * graph);
  * it :)                                                      
  * Note: this function returns -1 if a memory allocation
  * error occured                                             */
-int        add_edge(pgn_handle xi, pgn_handle xj, pv * observation, sm33 * information, pg * graph);
+int add_edge(pgn_handle xi, pgn_handle xj, pv * observation, sm33 * information, pg * graph);
 /* mark a node in the pose graph as fixed. This means that 
  * the node will not be changed in the optimization process.
  * Note: this function returns -1 if a memory allocation 

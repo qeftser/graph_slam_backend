@@ -2,6 +2,7 @@
 #ifndef SOLVER
 
 #define SOLVER
+#include "default.h"
 
 /* some of the functions given here are sanity checks
  * and slower algorithms made as my understanding of
@@ -9,10 +10,10 @@
  */
 
 /* prints the contents of a n*n square matrix */
-void print_full_matrix(float * M, int n);
+void print_full_matrix(gsb_float * M, int n);
 
 /* returns L, the lower triangular matrix for which L * Lt = A */
-float * basic_cholesky_factorization(float * A, int n);
+gsb_float * basic_cholesky_factorization(gsb_float * A, int n);
 
 /* packed column representation of a matrix */
 typedef struct packed_column_matrix {
@@ -20,7 +21,7 @@ typedef struct packed_column_matrix {
    int nnz;     /* number of non-zero elements       */
    int * colp;  /* array of start of column pointers */
    int * rx;    /* array of row indices              */
-   float * val; /* array of off-digonal values       */
+   gsb_float * val; /* array of off-digonal values       */
 } pcmat;
 
 typedef struct row_traversal_metadata {
@@ -36,7 +37,7 @@ typedef struct row_traversal_metadata {
 typedef struct matrix_triplet {
    int row;   /* the row position of the value    */
    int col;   /* the column position of the value */
-   float val; /* the actual value                 */
+   gsb_float val; /* the actual value                 */
 } mt;
 
 /* auxillary method for comparing two matrix triplets */
@@ -87,6 +88,6 @@ void perform_numerical_factorization(pcmat * A, pcmat * L);
 /* solve the system of equations Ax = b using the factored
  * value L. We first solve for Ly = b, then for Ltx = y. 
  * The array b is overwritten with the values of x         */
-void solve_system(pcmat * L, float * b);
+void solve_system(pcmat * L, gsb_float * b);
 
 #endif

@@ -82,7 +82,7 @@ int main(void) {
       pv pos = { 1, 2, 0.5 };
       ht t1 = as_homogeneous_transformation(pos);
       pv rpos = destruct_homogeneous_transformation(&t1);
-      TEST("t2v and v2t tests",(0 == memcmp(&pos,&rpos,sizeof(pv))));
+      TEST("t2v and v2t tests",check_equality_double(1e-5,3,pos.x,rpos.x,pos.y,rpos.y,pos.t,rpos.t));
    }
    {
       ht t1 = construct_homogeneous_transformation(0.5,1,2);
@@ -116,30 +116,30 @@ int main(void) {
                         {3,2,2.1},{5,2,3.1},{3,3,6.9},{4,3,2.8},{4,4,4.7},{5,5,9.9}          };
       int expected_colp[7] = { 0, 3, 6, 9, 11, 12, 13 };
       int expected_rx[13] = { 0, 2, 5, 1, 2, 5, 2, 3, 5, 3, 4, 4, 5 };
-      float expected_val[13] = { 4.6, 1.3, 2.5, 6.4, 1.7, 3.9, 7.3, 2.1, 3.1, 6.9, 2.8, 4.7, 9.9 };
+      gsb_float expected_val[13] = { 4.6, 1.3, 2.5, 6.4, 1.7, 3.9, 7.3, 2.1, 3.1, 6.9, 2.8, 4.7, 9.9 };
       pcmat * A = construct_packed_column_matrix(triplets,6,13);
       TEST("pcmat construction",(A->n == 6)                                        &&
                                 (A->nnz == 13)                                     &&
                                 (memcmp(A->colp,expected_colp,sizeof(int)*7) == 0) &&
                                 (memcmp(A->rx,expected_rx,sizeof(int)*13) == 0)    &&
-                                (memcmp(A->val,expected_val,sizeof(float)*13) == 0));
+                                (memcmp(A->val,expected_val,sizeof(gsb_float)*13) == 0));
       free_packed_column_matrix(A);
    }
    {
-      float mat[9] = {  4,  12, -16,
-                       12,  37, -43,
-                      -16, -43,  98 };
+      gsb_float mat[9] = {  4,  12, -16,
+                           12,  37, -43,
+                          -16, -43,  98 };
       mt triplets[6] = {{0,0,4},{1,0,12},{1,1,37},{2,0,-16},{2,1,-43},{2,2,98}};
 
       pcmat * A = construct_packed_column_matrix(triplets,3,6);
       pcmat * L = compute_symbolic_factorization(A);
       perform_numerical_factorization(A,L);
 
-      float b[3] = { 21, 63, 189 };
+      gsb_float b[3] = { 21, 63, 189 };
       solve_system(L,b);
-      float res[3] = { mat[0] * b[0] + mat[1] * b[1] + mat[2] * b[2],
-                       mat[3] * b[0] + mat[4] * b[1] + mat[5] * b[2],
-                       mat[6] * b[0] + mat[7] * b[1] + mat[8] * b[2] };
+      gsb_float res[3] = { mat[0] * b[0] + mat[1] * b[1] + mat[2] * b[2],
+                           mat[3] * b[0] + mat[4] * b[1] + mat[5] * b[2],
+                           mat[6] * b[0] + mat[7] * b[1] + mat[8] * b[2] };
       TEST("dense decomposition",(fabs(21.0  - res[0]) < 0.001) &&
                                  (fabs(63.0  - res[1]) < 0.001) &&
                                  (fabs(189.0 - res[2]) < 0.001));
@@ -147,12 +147,12 @@ int main(void) {
       free_packed_column_matrix(L);
    }
    {
-      float mat[36] = { 4.6, 0.0, 1.3, 0.0, 0.0, 2.5,
-                        0.0, 6.4, 1.7, 0.0, 0.0, 3.9,
-                        1.3, 1.7, 7.3, 2.1, 0.0, 3.1,
-                        0.0, 0.0, 2.1, 6.9, 2.8, 0.0,
-                        0.0, 0.0, 0.0, 2.8, 4.7, 0.0,
-                        2.5, 3.9, 3.1, 0.0, 0.0, 9.9 };
+      gsb_float mat[36] = { 4.6, 0.0, 1.3, 0.0, 0.0, 2.5,
+                            0.0, 6.4, 1.7, 0.0, 0.0, 3.9,
+                            1.3, 1.7, 7.3, 2.1, 0.0, 3.1,
+                            0.0, 0.0, 2.1, 6.9, 2.8, 0.0,
+                            0.0, 0.0, 0.0, 2.8, 4.7, 0.0,
+                            2.5, 3.9, 3.1, 0.0, 0.0, 9.9 };
       mt triplets[13] = {{0,0,4.6},{2,0,1.3},{5,0,2.5},{1,1,6.4},{2,1,1.7},{5,1,3.9},{2,2,7.3},
                         {3,2,2.1},{5,2,3.1},{3,3,6.9},{4,3,2.8},{4,4,4.7},{5,5,9.9}          };
 
@@ -160,9 +160,10 @@ int main(void) {
       pcmat * L = compute_symbolic_factorization(A);
       perform_numerical_factorization(A,L);
 
-      float b[6] = { 0.5, 1.5, 2.75, 3.5, 4.25, 5.5 };
+      gsb_float b[6] = { 0.5, 1.5, 2.75, 3.5, 4.25, 5.5 };
       solve_system(L,b);
-      float res[6] = { mat[ 0]*b[0] + mat[ 1]*b[1] + mat[ 2]*b[2] + mat[ 3]*b[3] + mat[ 4]*b[4] + mat[ 5]*b[5],
+      gsb_float res[6] = 
+                     { mat[ 0]*b[0] + mat[ 1]*b[1] + mat[ 2]*b[2] + mat[ 3]*b[3] + mat[ 4]*b[4] + mat[ 5]*b[5],
                        mat[ 6]*b[0] + mat[ 7]*b[1] + mat[ 8]*b[2] + mat[ 9]*b[3] + mat[10]*b[4] + mat[11]*b[5],
                        mat[12]*b[0] + mat[13]*b[1] + mat[14]*b[2] + mat[15]*b[3] + mat[16]*b[4] + mat[17]*b[5],
                        mat[18]*b[0] + mat[19]*b[1] + mat[20]*b[2] + mat[21]*b[3] + mat[22]*b[4] + mat[23]*b[5],
@@ -326,22 +327,58 @@ int main(void) {
 
       TEST("add nodes+edges",(graph->node_count == 4) &&
                              (graph->edge_count == 4) &&
-                             (memcmp(&graph->node[0].pos,&pos1,sizeof(pv)) == 0) &&
-                             (memcmp(&graph->node[1].pos,&pos2,sizeof(pv)) == 0) &&
-                             (memcmp(&graph->node[2].pos,&pos3,sizeof(pv)) == 0) &&
-                             (memcmp(&graph->node[3].pos,&pos4,sizeof(pv)) == 0) &&
+                             check_equality_double(1e-3,3,graph->node[0].pos.x,pos1.x,
+                                                          graph->node[0].pos.y,pos1.y,
+                                                          graph->node[0].pos.t,pos1.t) &&
+                             check_equality_double(1e-3,3,graph->node[1].pos.x,pos2.x,
+                                                          graph->node[1].pos.y,pos2.y,
+                                                          graph->node[1].pos.t,pos2.t) &&
+                             check_equality_double(1e-3,3,graph->node[2].pos.x,pos3.x,
+                                                          graph->node[2].pos.y,pos3.y,
+                                                          graph->node[2].pos.t,pos3.t) &&
+                             check_equality_double(1e-3,3,graph->node[3].pos.x,pos4.x,
+                                                          graph->node[3].pos.y,pos4.y,
+                                                          graph->node[3].pos.t,pos4.t) &&
                              (graph->edge[0].xi == 0) && (graph->edge[0].xj == 1) &&
                              (graph->edge[1].xi == 1) && (graph->edge[1].xj == 2) &&
                              (graph->edge[2].xi == 2) && (graph->edge[2].xj == 3) &&
                              (graph->edge[3].xi == 3) && (graph->edge[3].xj == 0) &&
-                             (memcmp(&graph->edge[0].observation,&obs12,sizeof(pv)) == 0) &&
-                             (memcmp(&graph->edge[1].observation,&obs23,sizeof(pv)) == 0) &&
-                             (memcmp(&graph->edge[2].observation,&obs34,sizeof(pv)) == 0) &&
-                             (memcmp(&graph->edge[3].observation,&obs41,sizeof(pv)) == 0) &&
-                             (memcmp(&graph->edge[0].information,&information,sizeof(sm33)) == 0) &&
-                             (memcmp(&graph->edge[1].information,&information,sizeof(sm33)) == 0) &&
-                             (memcmp(&graph->edge[2].information,&information,sizeof(sm33)) == 0) &&
-                             (memcmp(&graph->edge[3].information,&information,sizeof(sm33)) == 0));
+                             check_equality_double(1e-3,3,graph->edge[0].observation.x,obs12.x,
+                                                          graph->edge[0].observation.y,obs12.y,
+                                                          graph->edge[0].observation.t,obs12.t) &&
+                             check_equality_double(1e-3,3,graph->edge[1].observation.x,obs23.x,
+                                                          graph->edge[1].observation.y,obs23.y,
+                                                          graph->edge[1].observation.t,obs23.t) &&
+                             check_equality_double(1e-3,3,graph->edge[2].observation.x,obs34.x,
+                                                          graph->edge[2].observation.y,obs34.y,
+                                                          graph->edge[2].observation.t,obs34.t) &&
+                             check_equality_double(1e-3,3,graph->edge[3].observation.x,obs41.x,
+                                                          graph->edge[3].observation.y,obs41.y,
+                                                          graph->edge[3].observation.t,obs41.t) &&
+                             check_equality_double(1e-3,6,graph->edge[0].information.v[0],information.v[0],
+                                                          graph->edge[0].information.v[1],information.v[1],
+                                                          graph->edge[0].information.v[2],information.v[2],
+                                                          graph->edge[0].information.v[3],information.v[3],
+                                                          graph->edge[0].information.v[4],information.v[4],
+                                                          graph->edge[0].information.v[5],information.v[5]) &&
+                             check_equality_double(1e-3,6,graph->edge[1].information.v[0],information.v[0],
+                                                          graph->edge[1].information.v[1],information.v[1],
+                                                          graph->edge[1].information.v[2],information.v[2],
+                                                          graph->edge[1].information.v[3],information.v[3],
+                                                          graph->edge[1].information.v[4],information.v[4],
+                                                          graph->edge[1].information.v[5],information.v[5]) &&
+                             check_equality_double(1e-3,6,graph->edge[2].information.v[0],information.v[0],
+                                                          graph->edge[2].information.v[1],information.v[1],
+                                                          graph->edge[2].information.v[2],information.v[2],
+                                                          graph->edge[2].information.v[3],information.v[3],
+                                                          graph->edge[2].information.v[4],information.v[4],
+                                                          graph->edge[2].information.v[5],information.v[5]) &&
+                             check_equality_double(1e-3,6,graph->edge[3].information.v[0],information.v[0],
+                                                          graph->edge[3].information.v[1],information.v[1],
+                                                          graph->edge[3].information.v[2],information.v[2],
+                                                          graph->edge[3].information.v[3],information.v[3],
+                                                          graph->edge[3].information.v[4],information.v[4],
+                                                          graph->edge[3].information.v[5],information.v[5]));
       free_pose_graph(graph);
    }
    {
@@ -393,8 +430,8 @@ int main(void) {
       hash  * table = construct_table(graph->edge_count);
       mt * values = malloc(sizeof(mt)* 21 *graph->edge_count);
       bzero(values,sizeof(mt)* 21 *graph->edge_count);
-      float * b = malloc(sizeof(float)*graph->node_count*3);
-      bzero(b,sizeof(float)*graph->node_count*3);
+      gsb_float * b = malloc(sizeof(gsb_float)*graph->node_count*3);
+      bzero(b,sizeof(gsb_float)*graph->node_count*3);
       clear_table(table);
 
       value = compute_constraints_and_fill_information_matrix(0,1,&J_i,&J_j,&e_ij,&information,b,values,
@@ -590,6 +627,23 @@ int main(void) {
          poses[i] = graph->node[i].pos;
 
       TEST("check fixing node",check_equality_double(0.0001,3,poses[3].x,11.0,poses[3].y,2.0,poses[3].t,-M_PI/2));
+      free_pose_graph(graph);
+   }
+   {
+      pg * graph = construct_pose_graph();
+      pv poses[4] = {{1, 1, 0},{ 2, 1, M_PI/2},{2, 2, M_PI},{1, 2, -M_PI/2}};
+      pv obs[4] = {a_from_b(poses[1],poses[0]),a_from_b(poses[2],poses[1]),
+                   a_from_b(poses[3],poses[2]),a_from_b(poses[0],poses[3])};
+      sm33 information = { 1e15, 0, 1e15, 0, 0, 1e15 };
+
+      for (int i = 0; i < 4; ++i) {
+         add_node(poses[i],graph);
+         add_edge(i,(i+1)%4,&obs[i],&information,graph);
+      }
+
+      int ret = optimize(graph,NULL);
+
+      TEST("check large information values",ret != -1);
       free_pose_graph(graph);
    }
 
